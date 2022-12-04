@@ -1,0 +1,44 @@
+version: '3.5'
+services:
+
+  sqldb:
+    image: mysql:5.7
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_DATABASE=kimai
+      - MYSQL_USER=kimaiuser
+      - MYSQL_PASSWORD=kimaipassword
+      - MYSQL_ROOT_PASSWORD=changemeplease
+    volumes:
+      - mysql:/var/lib/mysql
+    command: --default-storage-engine innodb
+    restart: unless-stopped
+    healthcheck:
+      test: mysqladmin -p$$MYSQL_ROOT_PASSWORD ping -h localhost
+      interval: 20s
+      start_period: 10s
+      timeout: 10s
+      retries: 3
+
+  phpmyadmin:
+    depends_on:
+      - sqldb
+    image: phpmyadmin
+    restart: always
+    ports:
+      - "8090:80"
+    environment:
+      PMA_HOST: sqldb
+
+  postfix:
+    image: catatnight/postfix:latest
+    environment:
+      maildomain: webster.nl
+      smtp_user: kimai:kimai
+    restart: unless-stopped
+
+volumes:
+  var:
+  public:
+  mysql:
